@@ -30,7 +30,7 @@ questions = [
 ]
 
 # Mock interview duration (in seconds)
-INTERVIEW_DURATION = 180
+INTERVIEW_DURATION = 15
 
 # Define a feedback mechanism
 def generate_feedback(expression_analysis, face_presence):
