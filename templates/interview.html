@@ -31,7 +31,8 @@
                 video.srcObject = stream;
             })
             .catch(err => {
-                console.error("Error accessing the webcam: " + err);
+                console.error("Error accessing the webcam: ", err);
+                alert("Could not access the webcam. Please check your browser permissions.");
             });
 
         // Capture a frame from the video and send it to the server for analysis
