@@ -38,11 +38,9 @@ def generate_feedback(expression_analysis, face_presence):
         "Sad": "You seemed a bit down during the interview. Try to smile more!",
         "Angry": "There was some frustration detected. Stay calm and composed!",
         "Neutral": "You seemed neutral. Try to show more enthusiasm!",
-        # More expressions can be added here.
     }
 
     feedback = []
-    # Analyze the expressions from the interview session
     if expression_analysis:
         expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
         most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
@@ -50,12 +48,11 @@ def generate_feedback(expression_analysis, face_presence):
     else:
         feedback.append("No expressions detected.")
 
-    # Analyze eye contact (based on face presence)
     if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
         feedback.append("Good eye contact! You maintained focus during the interview.")
     else:
         feedback.append("Your eye contact could be improved. Try to face the camera more.")
-    
+
     return " ".join(feedback)
 
 @app.route('/')
@@ -64,7 +61,6 @@ def home():
 
 @app.route('/mock-interview')
 def mock_interview():
-    # Randomly select interview questions
     selected_questions = random.sample(questions, 5)
     return render_template('interview.html', questions=selected_questions)
 
@@ -76,29 +72,25 @@ def analyze():
     try:
         image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     except Exception as e:
-        print(f"Error loading image: {e}")  # Debugging
+        print(f"Error loading image: {e}")
         return jsonify({'error': 'Invalid image data or format.'}), 400
 
-    # Preprocess the image for facial expression analysis
     inputs = processor(images=image, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs)
 
-    # Get the predicted expression
     logits = outputs.logits
     predicted_class_idx = logits.argmax(-1).item()
     label = model.config.id2label[predicted_class_idx]
 
-    # Basic face detection for eye contact analysis
     image_np = np.array(image)
     gray_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray_image, 1.1, 4)
+    faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-    # Determine if face is present
     face_present = len(faces) > 0
 
-    print(f"Detected expression: {label}, Face present: {face_present}")  # Debugging
+    print(f"Detected expression: {label}, Face present: {face_present}")
 
     return jsonify({'label': label, 'face_present': face_present})
 
@@ -107,11 +99,10 @@ def end_interview():
     expression_analysis = request.json.get('expressions', [])
     face_presence = request.json.get('face_presence', [])
 
-    # Generate feedback based on analysis
+    print(f"Expression analysis: {expression_analysis}")
+    print(f"Face presence: {face_presence}")
+
     feedback = generate_feedback(expression_analysis, face_presence)
-    
-    print(f"Expression analysis: {expression_analysis}")  # Debugging
-    print(f"Face presence: {face_presence}")  # Debugging
     
     return jsonify({'feedback': feedback})
 
