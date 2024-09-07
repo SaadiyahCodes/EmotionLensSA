@@ -7,7 +7,6 @@ import random
 import cv2
 import numpy as np
 import torch
-import time
 
 app = Flask(__name__)
 
@@ -30,7 +29,7 @@ questions = [
 ]
 
 # Mock interview duration (in seconds)
-INTERVIEW_DURATION = 15
+INTERVIEW_DURATION = 180
 
 # Define a feedback mechanism
 def generate_feedback(expression_analysis, face_presence):
@@ -71,7 +70,12 @@ def mock_interview():
 def analyze():
     data = request.json
     image_data = data['image'].split(",")[1]
-    image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+
+    try:
+        image = Image.open(io.BytesIO(base64.b64decode(image_data)))
+    except Exception as e:
+        print(f"Error opening image: {e}")
+        return jsonify({'label': 'Error', 'face_present': False})
 
     # Preprocess the image for facial expression analysis
     inputs = processor(images=image, return_tensors="pt")
