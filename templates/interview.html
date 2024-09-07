@@ -42,7 +42,7 @@
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const image = canvas.toDataURL('image/jpeg'); // Ensure format is 'image/jpeg'
+            const image = canvas.toDataURL('image/jpeg');
 
             fetch('/analyze', {
                 method: 'POST',
@@ -53,15 +53,12 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.label !== 'Error') {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
                     expressionAnalysis.push(data.label);
                     facePresence.push(data.face_present);
-                } else {
-                    console.error('Error analyzing image.');
                 }
-            })
-            .catch(error => {
-                console.error('Error analyzing image:', error);
             });
         }
 
@@ -98,9 +95,6 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('feedback').textContent = data.feedback;
-            })
-            .catch(error => {
-                console.error('Error ending interview:', error);
             });
         }
     </script>
