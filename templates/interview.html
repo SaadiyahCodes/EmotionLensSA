@@ -25,7 +25,6 @@
         let expressionAnalysis = [];
         let facePresence = [];
 
-        // Get user media to display webcam video
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
@@ -35,7 +34,6 @@
                 alert("Could not access the webcam. Please check your browser permissions.");
             });
 
-        // Capture a frame from the video and send it to the server for analysis
         function captureFrame() {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
@@ -64,11 +62,9 @@
             .catch(error => console.error('Fetch error:', error));
         }
 
-        // Capture frames at regular intervals
         setInterval(captureFrame, 3000); // every 3 seconds
 
-        // Timer for interview duration
-        let timeRemaining = 180;  // 3 minutes
+        let timeRemaining = 180;
         const timeDisplay = document.getElementById('time');
         const interval = setInterval(() => {
             timeRemaining -= 1;
@@ -80,7 +76,6 @@
             }
         }, 1000);
 
-        // End interview and send data for feedback
         const endInterviewBtn = document.getElementById('endInterviewBtn');
         endInterviewBtn.addEventListener('click', endInterview);
 
