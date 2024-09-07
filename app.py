@@ -38,7 +38,6 @@ def generate_feedback(expression_analysis, face_presence):
         "Sad": "You seemed a bit down during the interview. Try to smile more!",
         "Angry": "There was some frustration detected. Stay calm and composed!",
         "Neutral": "You seemed neutral. Try to show more enthusiasm!",
-        # More expressions can be added here.
     }
 
     feedback = []
@@ -70,12 +69,11 @@ def mock_interview():
 def analyze():
     data = request.json
     image_data = data['image'].split(",")[1]
-
+    
     try:
         image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     except Exception as e:
-        print(f"Error opening image: {e}")
-        return jsonify({'label': 'Error', 'face_present': False})
+        return jsonify({'error': str(e)}), 400
 
     # Preprocess the image for facial expression analysis
     inputs = processor(images=image, return_tensors="pt")
