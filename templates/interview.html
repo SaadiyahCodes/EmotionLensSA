@@ -42,7 +42,7 @@
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const image = canvas.toDataURL('image/jpeg');
+            const image = canvas.toDataURL('image/jpeg'); // Ensure format is 'image/jpeg'
 
             fetch('/analyze', {
                 method: 'POST',
@@ -53,8 +53,12 @@
             })
             .then(response => response.json())
             .then(data => {
-                expressionAnalysis.push(data.label);
-                facePresence.push(data.face_present);
+                if (data.label !== 'Error') {
+                    expressionAnalysis.push(data.label);
+                    facePresence.push(data.face_present);
+                } else {
+                    console.error('Error analyzing image.');
+                }
             })
             .catch(error => {
                 console.error('Error analyzing image:', error);
@@ -62,7 +66,7 @@
         }
 
         // Capture frames at regular intervals
-        const captureInterval = setInterval(captureFrame, 3000); // every 3 seconds
+        setInterval(captureFrame, 3000); // every 3 seconds
 
         // Timer for interview duration
         let timeRemaining = 180;  // 3 minutes
@@ -79,13 +83,11 @@
 
         // End interview and send data for feedback
         const endInterviewBtn = document.getElementById('endInterviewBtn');
-        endInterviewBtn.addEventListener('click', () => {
-            clearInterval(interval);
-            clearInterval(captureInterval);  // Stop capturing frames
-            endInterview();
-        });
+        endInterviewBtn.addEventListener('click', endInterview);
 
         function endInterview() {
+            clearInterval(interval);
+
             fetch('/end-interview', {
                 method: 'POST',
                 headers: {
@@ -99,7 +101,6 @@
             })
             .catch(error => {
                 console.error('Error ending interview:', error);
-                document.getElementById('feedback').textContent = 'An error occurred while processing your feedback.';
             });
         }
     </script>
