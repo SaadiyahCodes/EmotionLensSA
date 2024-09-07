@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Interview</title>
+</head>
+<body>
+    <h1>Mock Interview</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <div id="questions">
+        <h2>Questions:</h2>
+        <ul>
+            {% for question in questions %}
+                <li>{{ question }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <p id="time">Time Remaining: 180 seconds</p>
+    <button id="endInterviewBtn">End Interview</button>
+    <p id="feedback"></p>
+
+    <script>
+        const video = document.getElementById('video');
+        let expressionAnalysis = [];
+        let facePresence = [];
+
+        // Get user media to display webcam video
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the webcam: " + err);
+            });
+
+        // Capture a frame from the video and send it to the server for analysis
+        function captureFrame() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const image = canvas.toDataURL('image/jpeg');
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: image })
+            })
+            .then(response => response.json())
+            .then(data => {
+                expressionAnalysis.push(data.label);
+                facePresence.push(data.face_present);
+            });
+        }
+
+        // Capture frames at regular intervals
+        setInterval(captureFrame, 3000); // every 3 seconds
+
+        // Timer for interview duration
+        let timeRemaining = 180;  // 3 minutes
+        const timeDisplay = document.getElementById('time');
+        const interval = setInterval(() => {
+            timeRemaining -= 1;
+            timeDisplay.textContent = `Time Remaining: ${timeRemaining} seconds`;
+
+            if (timeRemaining <= 0) {
+                clearInterval(interval);
+                endInterview();
+            }
+        }, 1000);
+
+        // End interview and send data for feedback
+        const endInterviewBtn = document.getElementById('endInterviewBtn');
+        endInterviewBtn.addEventListener('click', endInterview);
+
+        function endInterview() {
+            clearInterval(interval);
+
+            fetch('/end-interview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expressions: expressionAnalysis, face_presence: facePresence })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('feedback').textContent = data.feedback;
+            });
+        }
+    </script>
+</body>
+</html>
