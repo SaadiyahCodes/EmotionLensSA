@@ -42,15 +42,14 @@ def generate_feedback(expression_analysis, face_presence):
     }
 
     feedback = []
-    if expression_analysis:
-        # Analyze the expressions from the interview session
-        expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
-        most_common_expression = max(expression_counts, key=expression_counts.get)
-        
-        feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
+    # Analyze the expressions from the interview session
+    expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
+    most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
+    
+    feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
 
     # Analyze eye contact (based on face presence)
-    if face_presence and sum(face_presence) / len(face_presence) > 0.7:
+    if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
         feedback.append("Good eye contact! You maintained focus during the interview.")
     else:
         feedback.append("Your eye contact could be improved. Try to face the camera more.")
@@ -71,12 +70,11 @@ def mock_interview():
 def analyze():
     data = request.json
     image_data = data['image'].split(",")[1]
-
+    
     try:
         image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     except Exception as e:
-        print(f"Error opening image: {e}")
-        return jsonify({'error': 'Error opening image'})
+        return jsonify({'error': 'Invalid image data or format.'}), 400
 
     # Preprocess the image for facial expression analysis
     inputs = processor(images=image, return_tensors="pt")
@@ -100,9 +98,8 @@ def analyze():
 
 @app.route('/end-interview', methods=['POST'])
 def end_interview():
-    data = request.json
-    expression_analysis = data.get('expressions', [])
-    face_presence = data.get('face_presence', [])
+    expression_analysis = request.json.get('expressions', [])
+    face_presence = request.json.get('face_presence', [])
 
     # Generate feedback based on analysis
     feedback = generate_feedback(expression_analysis, face_presence)
