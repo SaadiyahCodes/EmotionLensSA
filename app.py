@@ -38,17 +38,18 @@ def generate_feedback(expression_analysis, face_presence):
         "Sad": "You seemed a bit down during the interview. Try to smile more!",
         "Angry": "There was some frustration detected. Stay calm and composed!",
         "Neutral": "You seemed neutral. Try to show more enthusiasm!",
+        # More expressions can be added here.
     }
 
     feedback = []
     # Analyze the expressions from the interview session
     expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
-    most_common_expression = max(expression_counts, key=expression_counts.get)
+    most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
     
     feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
 
     # Analyze eye contact (based on face presence)
-    if sum(face_presence) / len(face_presence) > 0.7:
+    if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
         feedback.append("Good eye contact! You maintained focus during the interview.")
     else:
         feedback.append("Your eye contact could be improved. Try to face the camera more.")
@@ -73,7 +74,7 @@ def analyze():
     try:
         image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': 'Invalid image data or format.'}), 400
 
     # Preprocess the image for facial expression analysis
     inputs = processor(images=image, return_tensors="pt")
@@ -97,8 +98,8 @@ def analyze():
 
 @app.route('/end-interview', methods=['POST'])
 def end_interview():
-    expression_analysis = request.json['expressions']
-    face_presence = request.json['face_presence']
+    expression_analysis = request.json.get('expressions', [])
+    face_presence = request.json.get('face_presence', [])
 
     # Generate feedback based on analysis
     feedback = generate_feedback(expression_analysis, face_presence)
