@@ -55,14 +55,17 @@
             .then(data => {
                 expressionAnalysis.push(data.label);
                 facePresence.push(data.face_present);
+            })
+            .catch(error => {
+                console.error('Error analyzing image:', error);
             });
         }
 
         // Capture frames at regular intervals
-        setInterval(captureFrame, 3000); // every 3 seconds
+        const captureInterval = setInterval(captureFrame, 3000); // every 3 seconds
 
         // Timer for interview duration
-        let timeRemaining = 15;  // 3 minutes
+        let timeRemaining = 180;  // 3 minutes
         const timeDisplay = document.getElementById('time');
         const interval = setInterval(() => {
             timeRemaining -= 1;
@@ -76,11 +79,13 @@
 
         // End interview and send data for feedback
         const endInterviewBtn = document.getElementById('endInterviewBtn');
-        endInterviewBtn.addEventListener('click', endInterview);
+        endInterviewBtn.addEventListener('click', () => {
+            clearInterval(interval);
+            clearInterval(captureInterval);  // Stop capturing frames
+            endInterview();
+        });
 
         function endInterview() {
-            clearInterval(interval);
-
             fetch('/end-interview', {
                 method: 'POST',
                 headers: {
@@ -91,6 +96,10 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('feedback').textContent = data.feedback;
+            })
+            .catch(error => {
+                console.error('Error ending interview:', error);
+                document.getElementById('feedback').textContent = 'An error occurred while processing your feedback.';
             });
         }
     </script>
