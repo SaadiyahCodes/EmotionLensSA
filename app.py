@@ -43,10 +43,12 @@ def generate_feedback(expression_analysis, face_presence):
 
     feedback = []
     # Analyze the expressions from the interview session
-    expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
-    most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
-    
-    feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
+    if expression_analysis:
+        expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
+        most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
+        feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
+    else:
+        feedback.append("No expressions detected.")
 
     # Analyze eye contact (based on face presence)
     if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
@@ -70,10 +72,11 @@ def mock_interview():
 def analyze():
     data = request.json
     image_data = data['image'].split(",")[1]
-    
+
     try:
         image = Image.open(io.BytesIO(base64.b64decode(image_data)))
     except Exception as e:
+        print(f"Error loading image: {e}")  # Debugging
         return jsonify({'error': 'Invalid image data or format.'}), 400
 
     # Preprocess the image for facial expression analysis
@@ -92,7 +95,10 @@ def analyze():
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     faces = face_cascade.detectMultiScale(gray_image, 1.1, 4)
 
+    # Determine if face is present
     face_present = len(faces) > 0
+
+    print(f"Detected expression: {label}, Face present: {face_present}")  # Debugging
 
     return jsonify({'label': label, 'face_present': face_present})
 
@@ -103,6 +109,9 @@ def end_interview():
 
     # Generate feedback based on analysis
     feedback = generate_feedback(expression_analysis, face_presence)
+    
+    print(f"Expression analysis: {expression_analysis}")  # Debugging
+    print(f"Face presence: {face_presence}")  # Debugging
     
     return jsonify({'feedback': feedback})
 
