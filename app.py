@@ -38,7 +38,8 @@ def generate_feedback(expression_analysis, face_presence):
         "Sad": "You seemed a bit down during the interview. Try to smile more!",
         "Angry": "There was some frustration detected. Stay calm and composed!",
         "Neutral": "You seemed neutral. Try to show more enthusiasm!",
-        # Add more expressions if the model supports them.
+        "Surprised": "You seemed surprised at times. Try to maintain a more consistent expression.",
+        "Fear": "You appeared fearful at times. Try to relax and stay calm.",
     }
 
     feedback = []
