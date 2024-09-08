@@ -89,11 +89,17 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ expressions: expressionAnalysis, face_presence: facePresence })
+                body: JSON.stringify({
+                    expressions: expressionAnalysis.reduce((acc, exp) => {
+                        acc[exp] = (acc[exp] || 0) + 1;
+                        return acc;
+                    }, {}),
+                    face_presence: facePresence
+                })
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('feedback').textContent = data.feedback;
+                document.getElementById('feedback').innerHTML = `<strong>Normal Feedback:</strong> ${data.feedback} <br> <strong>AI Feedback:</strong> ${data.ai_feedback}`;
             })
             .catch(error => console.error('Fetch error:', error));
         }

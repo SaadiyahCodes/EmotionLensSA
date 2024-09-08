@@ -1,0 +1,12 @@
+Flask
+Flask-CORS
+Flask-SQLAlchemy
+requests
+markdown
+markupsafe
+openai
+Pillow
+torch
+transformers
+opencv-python
+numpy

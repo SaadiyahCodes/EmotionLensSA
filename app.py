@@ -1,4 +1,11 @@
 from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+import markdown
+from markupsafe import Markup
+import requests
+import json
+from os import getenv
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 from PIL import Image
 import io
@@ -9,6 +16,21 @@ import torch
 import random  # Import the random module
 
 app = Flask(__name__)
+#CORS(app)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///feedback.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Interview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    expression_analysis = db.Column(db.JSON, nullable=False)
+    face_presence = db.Column(db.JSON, nullable=False)
+    feedback = db.Column(db.Text, nullable=True)
+
+with app.app_context():
+    db.create_all()
+
 
 # Load pre-trained model and processor for facial expression analysis
 processor = AutoImageProcessor.from_pretrained("trpakov/vit-face-expression")
@@ -43,8 +65,12 @@ def generate_feedback(expression_analysis, face_presence):
     }
 
     feedback = []
+    # Ensure expression_analysis is a dictionary
+    if not isinstance(expression_analysis, dict):
+        expression_analysis = {label: 0 for label in expression_feedback.keys()}
+
     # Analyze the expressions from the interview session
-    expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
+    expression_counts = {label: expression_analysis.get(label.lower(), 0) for label in expression_feedback.keys()}
     
     # If the most common expression is not "Happy", directly use that expression
     most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
@@ -54,9 +80,9 @@ def generate_feedback(expression_analysis, face_presence):
 
     # Analyze eye contact (based on face presence)
     if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
-        feedback.append("Good eye contact! You maintained focus during the interview.")
+        feedback.append("/nGood eye contact! You maintained focus during the interview.")
     else:
-        feedback.append("Your eye contact could be improved. Try to face the camera more.")
+        feedback.append("/nYour eye contact could be improved. Try to face the camera more.")
 
     return " ".join(feedback)
 
@@ -121,13 +147,62 @@ def analyze():
 
 @app.route('/end-interview', methods=['POST'])
 def end_interview():
-    expression_analysis = request.json.get('expressions', [])
+    expression_analysis = request.json.get('expressions', {
+        "happy": 0,
+        "sad": 0,
+        "angry": 0,
+        "neutral": 0,
+        "fear": 0,
+        "surprised": 0
+    })
     face_presence = request.json.get('face_presence', [])
 
     # Generate feedback based on analysis
     feedback = generate_feedback(expression_analysis, face_presence)
+    interview = Interview(expression_analysis=expression_analysis, face_presence=face_presence, feedback=feedback)
+    db.session.add(interview)
+    db.session.commit()
+
+    #generate ai feedback
+    ai_feedback = generate_ai_feedback(expression_analysis)
     
-    return jsonify({'feedback': feedback})
+    return jsonify({'feedback': feedback, 'ai_feedback': ai_feedback})
+
+def generate_ai_feedback(expression_counts):
+    #to avoid KeyError
+    happy_count = expression_counts.get('happy', 0)
+    sad_count = expression_counts.get('sad', 0)
+    angry_count = expression_counts.get('angry', 0)
+    neutral_count = expression_counts.get('neutral', 0)
+    fear_count = expression_counts.get('fear', 0)
+    surprised_count = expression_counts.get('surprised', 0)
+
+    message = (
+        f"The user had the following emotional states during the interview: "
+        f"Happy: {happy_count}, Sad: {sad_count}, Angry: {angry_count}, "
+        f"Neutral: {neutral_count}, Fear: {fear_count}, Surprised: {surprised_count}."
+        f" Prepare feedback based on their facial expressions and give tips to improve. "
+        f"Keep the performance summary brief around 3 to 4 lines and tips brief around 6-7 lines."
+    )
+
+    response = requests.post(
+        url="https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {getenv('OPENROUTER_API_KEY')}",
+        },
+        data=json.dumps({
+            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "messages": [
+                {"role": "user", "content": message}
+            ]
+        })
+    )
+    ai_feedback = response.json().get("choices")[0].get("message").get("content")
+    html_feedback = markdown.markdown(ai_feedback) # Convert to HTML
+    html_feedback_safe = Markup(html_feedback) # Mark as safe
+
+    return f"Your performance summary:\n{html_feedback_safe}"
+
 
 if __name__ == '__main__':
     app.run(debug=True)
