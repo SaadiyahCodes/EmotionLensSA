@@ -3,11 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock Interview</title>
+    <title>Mock Interview Website</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: black;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 20px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #57b9ff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Mock Interview App</h1>
-    <p>Click the button below to start a mock interview.</p>
-    <a href="/mock-interview"><button>Start Mock Interview</button></a>
+
+<header>
+    <h1>Mock Interview Platform</h1>
+</header>
+
+
+    <section class="card">
+        <h2>Start Your First Interview</h2>
+        <a href="/mock-interview" class="btn">Start</a>
+    </section>
+
+    <section class="card">
+        <h2>Feedback</h2>
+        <p>We value your feedback! Please leave your comments below:</p><br>
+        <form>
+            <textarea rows="10" cols="100" placeholder="Your feedback"></textarea><br><br>
+            <button class="btn">Submit Feedback</button>
+        </form>
+    </section>
+</div>
+
+<footer>
+    <p>&copy; 2024 Mock Interview Platform. All rights reserved.</p>
+</footer>
+
 </body>
 </html>
