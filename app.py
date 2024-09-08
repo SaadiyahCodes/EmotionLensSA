@@ -3,7 +3,6 @@ from transformers import AutoImageProcessor, AutoModelForImageClassification
 from PIL import Image
 import io
 import base64
-import random
 import cv2
 import numpy as np
 import torch
@@ -44,9 +43,13 @@ def generate_feedback(expression_analysis, face_presence):
     feedback = []
     # Analyze the expressions from the interview session
     expression_counts = {label: expression_analysis.count(label) for label in set(expression_analysis)}
-    most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
-    
-    feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
+
+    # Add threshold logic for "Happy" expression to dominate feedback
+    if expression_counts.get("Happy", 0) > 0.5 * len(expression_analysis):
+        feedback.append(expression_feedback["Happy"])
+    else:
+        most_common_expression = max(expression_counts, key=expression_counts.get, default="Neutral")
+        feedback.append(expression_feedback.get(most_common_expression, "Your expressions were mixed."))
 
     # Analyze eye contact (based on face presence)
     if len(face_presence) > 0 and sum(face_presence) / len(face_presence) > 0.7:
@@ -81,10 +84,11 @@ def analyze():
     with torch.no_grad():
         outputs = model(**inputs)
 
-    # Get the predicted expression
+    # Get the predicted expression and confidence
     logits = outputs.logits
     predicted_class_idx = logits.argmax(-1).item()
     label = model.config.id2label[predicted_class_idx]
+    confidence = torch.nn.functional.softmax(logits, dim=-1)[0, predicted_class_idx].item()
 
     # Basic face detection for eye contact analysis
     image_np = np.array(image)
@@ -94,7 +98,7 @@ def analyze():
 
     face_present = len(faces) > 0
 
-    return jsonify({'label': label, 'face_present': face_present})
+    return jsonify({'label': label, 'confidence': confidence, 'face_present': face_present})
 
 @app.route('/end-interview', methods=['POST'])
 def end_interview():

@@ -55,6 +55,8 @@
                 if (data.error) {
                     console.error('Error:', data.error);
                 } else {
+                    console.log('Expression detected:', data.label);  // Log detected expression
+                    console.log('Confidence:', data.confidence);  // Log confidence score
                     expressionAnalysis.push(data.label);
                     facePresence.push(data.face_present);
                 }
@@ -62,7 +64,7 @@
             .catch(error => console.error('Fetch error:', error));
         }
 
-        setInterval(captureFrame, 3000); // every 3 seconds
+        setInterval(captureFrame, 1000); // every 1 second
 
         let timeRemaining = 180;
         const timeDisplay = document.getElementById('time');
