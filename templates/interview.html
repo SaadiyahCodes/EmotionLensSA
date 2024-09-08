@@ -52,6 +52,7 @@
         }
         .btn {
             background-color: #57b9ff;
+            text-align: center;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -76,6 +77,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            text-align: center;
             height: 100vh; /* Full viewport height */
             background-color: #f4f4f4;
         }
@@ -84,20 +86,30 @@
             max-width: 100%;
             height: auto;
             border-radius: 8px;
+            text-align: center;
         }
 
         /* Video dimensions */
         video {
+            text-align: center;
             width: 640px; /* Default width */
             height: 360px; /* Default height */
             background-color: black; /* Optional background */
+        }
+        .centerWrap {
+            text-align: center;
+            }
+        li {
+            text-align: center;
         }
     </style>
 </head>
 <header>
     <h1>Mock Interview Platform</h1>
 </header>
-<video text-align="center" id="video" width="640" height="480" autoplay></video>
+<p class="centerWrap">
+    <video text-align="center" id="video" width="640" height="480" autoplay></video>
+</p>
 <body>
     
     
@@ -109,8 +121,12 @@
             {% endfor %}
         </ul>
     </div>
-    <p id="time">Time Remaining: 180 seconds</p>
-    <button id="endInterviewBtn">End Interview</button>
+    <br>
+    <p class = "centerWrap" id="time">Time Remaining: 180 seconds</b></p>
+    <p class="centerWrap">
+
+        <button class = "btn" id="endInterviewBtn">End Interview</button>
+    </p>
     <p id="feedback"></p>
 
     <script>
