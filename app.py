@@ -16,7 +16,7 @@ import torch
 import random  # Import the random module
 
 app = Flask(__name__)
-#CORS(app)
+CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///feedback.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
